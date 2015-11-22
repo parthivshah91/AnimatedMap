@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Ice Cream Map Demo</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.css" />
+	<style>
+		body {
+			padding: 0;
+			margin: 0;
+		}
+		html, body, #map {
+			height: 100%;
+		}
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+</body>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.1/leaflet.js?2"></script>
+<script src="./arc.js"></script>
+<script src="data.js"></script>
+<script src="MovingMarker.js"></script>
+
+<script type="text/javascript">
+
+	var map = new L.Map('map').setView([52.920626,5.744596], 2);
+
+		// create a new tile layer
+		var tileUrl = 'http://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png',
+		layer = new L.TileLayer(tileUrl, {
+			attribution: '&copy; <a href="http://www.opencyclemap.org">OpenCycleMap</a>, &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+			maxZoom: 19
+		});
+
+		// add the layer to the map
+		map.addLayer(layer);
+		var icon = new L.Icon.Default();
+		icon.options.shadowSize = [0,0];
+		var netherlands = L.marker([52.920626,5.744596],{icon : icon}).addTo(map);
+
+		// making loop for every line
+		
+		for (i = 0; i < data.length; i++) {
+			drawLine(data[i]);
+			animateMarker(data[i]);
+		}
+
+
+		function drawLine(data) {
+	    // add a new line to the map, but one with no points - yet
+	    var polyline = L.polyline([], {
+	    	color: '#124395',
+	    	weight: 2
+	    }).addTo(map);
+
+	    // keep a tally of how many points we've added to the map
+	    var pointsAdded = 0;
+	    var linea1 = data.geometry ? data.geometry.coordinates : data;
+	    var pointsTobeAdded = linea1.length;
+
+	    // start adding new points to the map
+	    add();
+
+
+	    function add() {
+
+	        // addLatLng takes a new latLng location and puts it at the end of the line
+	        polyline.addLatLng(
+	        	L.latLng(linea1[pointsAdded][1], linea1[pointsAdded][0])
+	        	);
+	        if (++pointsAdded < pointsTobeAdded) {
+	        	
+	        	window.setTimeout(add, 80);
+	            //add();
+	        }else{
+	        	window.setTimeout(function(){
+	        		map.removeLayer(polyline);
+	        	}, 600);
+	        }
+	    }; //end add()
+	}
+
+
+	function animateMarker(data){
+		var lines, route;
+		var globalData = data;
+		lines = L.geoJson(data, {
+			onEachFeature: onEachFeature
+		});
+
+		function onEachFeature(feature, layer) {
+
+			var array = feature.geometry.coordinates
+			var myArray = [];
+			var last = array.length - 1;
+
+
+			for (var i = 0; i <= array.length - 1; i++) {
+		            //console.log([array[i][1], array[i][0]]);
+		            myArray.push([array[i][1], array[i][0]])
+		        };
+		        route = L.polyline(myArray);
+
+		    }
+
+		    var myIcon = L.icon({
+		    	iconUrl: 'plane.png',
+		        iconAnchor: [20, 28] // point of the icon which will correspond to marker's location
+		    });
+		    var speed = [];
+		    for (var i = 0 ; i<100;i++) {
+		    	speed.push(80);
+		    };
+
+		    var movingMarker = L.Marker.movingMarker(route.getLatLngs(), speed,{autostart: true,icon: myIcon,loop: false,globalData: globalData}).addTo(map);
+
+		}
+
+	</script>
+
+
+	</html>
